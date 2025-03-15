@@ -58,13 +58,13 @@ exports.login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 3600000,
-      sameSite: "None",
+      sameSite: "none",
     });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 86400000,
-      sameSite: "None",
+      sameSite: "none",
     });
 
     res.json({ message: "Login successful" });
@@ -74,9 +74,20 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie("token");
-  res.clearCookie("refreshToken");
-  res.json({ message: "Logged out successfully" });
+  res.clearCookie("token", {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  });
+  res.clearCookie("refreshToken", {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
 };
 
 exports.getCurrentUser = async (req, res) => {
@@ -109,7 +120,7 @@ exports.getCurrentUser = async (req, res) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           maxAge: 3600000,
-          sameSite: "None",
+          sameSite: "none",
         });
         req.user = decodedRefresh.id;
       } catch (refreshError) {
