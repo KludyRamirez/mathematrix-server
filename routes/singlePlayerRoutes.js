@@ -15,6 +15,6 @@ router.post("/start", singlePlayerGameStart);
 router.post("/cancel", singlePlayerGameCancel);
 router.post("/answer", singlePlayerGameAnswer);
 router.post("/end", singlePlayerGameEnd);
-router.get("/leaderboard", csrfProtection, protect, getSinglePlayerLeaderboard);
+router.get("/leaderboard", getSinglePlayerLeaderboard);
 
 module.exports = router;

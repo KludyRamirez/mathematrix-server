@@ -86,9 +86,23 @@ exports.getSinglePlayerLeaderboard = async (req, res) => {
           totalCorrect: { $sum: "$correctAnswers" },
           totalIncorrect: { $sum: "$incorrectAnswers" },
           gamesPlayed: { $sum: 1 },
+          elo: {
+            $sum: {
+              $max: [
+                0,
+                {
+                  $add: [
+                    100,
+                    { $multiply: ["$correctAnswers", 10] },
+                    { $multiply: ["$incorrectAnswers", -5] },
+                  ],
+                },
+              ],
+            },
+          },
         },
       },
-      { $sort: { totalCorrect: -1 } },
+      { $sort: { elo: -1 } },
     ]);
 
     res.json(leaderboard);
