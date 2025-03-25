@@ -15,7 +15,9 @@ dotenv.config();
 const app = express();
 const apiServer = http.createServer(app);
 const socketServer = http.createServer();
-const io = new Server(socketServer, { cors: { origin: "*" } });
+const io = new Server(socketServer, {
+  cors: { origin: process.env.CLIENT_API },
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -36,7 +38,7 @@ io.on("connection", (socket) => {
     if (playersQueue.length >= 2) {
       const player1 = playersQueue.shift();
       const player2 = playersQueue.shift();
-      const matchId = `${player1.username}_vs_${player2.username}`;
+      const matchId = `${player1.username}vs${player2.username}`;
 
       activeMatches[matchId] = {
         players: [player1, player2],
@@ -86,18 +88,46 @@ io.on("connection", (socket) => {
   const sendNextQuestion = (matchId) => {
     const match = activeMatches[matchId];
 
-    if (!match || match.currentQuestionIndex >= match.questions.length) {
+    if (!match) {
+      console.log(`❌ No active match found for matchId: ${matchId}`);
+      return;
+    }
+
+    if (!match.questions || match.questions.length === 0) {
+      console.log(`❌ No questions available for matchId: ${matchId}`);
+      return;
+    }
+
+    console.log(
+      `🟢 Sending next question for match: ${matchId}, Current Index: ${match.currentQuestionIndex}`
+    );
+
+    if (match.currentQuestionIndex >= match.questions.length) {
+      console.log(`🏁 All questions sent! Ending game for match: ${matchId}`);
       endGame(matchId);
       return;
     }
 
     const question = match.questions[match.currentQuestionIndex];
+
+    console.log(`📩 Sending Question:`, question);
+
     match.currentQuestionIndex++;
     match.answersReceived = {};
 
-    io.to(match.players[0].socketId).emit("new_question", { question });
-    io.to(match.players[1].socketId).emit("new_question", { question });
+    // Send question to both players
+    match.players.forEach((player) => {
+      if (player?.socketId) {
+        io.to(player.socketId).emit("new_question", { question });
+        console.log(
+          `✅ Question sent to player with socket ID: ${player.socketId}`
+        );
+      } else {
+        console.log(`⚠️ Missing socket ID for a player in match: ${matchId}`);
+      }
+    });
 
+    // Restart the timer
     if (timers[matchId]) clearTimeout(timers[matchId]);
     timers[matchId] = setTimeout(() => sendNextQuestion(matchId), 180000);
   };

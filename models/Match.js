@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const MatchSchema = new mongoose.Schema({
-  matchId: { type: String, required: true, unique: true },
+  matchId: { type: String, required: true},
   players: [
     {
       socketId: { type: String, required: true },
